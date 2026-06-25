@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>車が読むSNS / 人間には必要情報だけ届く</title>
+    <title>自車AIが街の車情報を要約するプロトタイプ</title>
     <style>
       :root {
         color-scheme: dark;
@@ -18,6 +18,7 @@
         --accent-2: #74f7b0;
         --warn: #ffd166;
         --danger: #ff8a8a;
+        --purple: #b8a2ff;
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
@@ -49,7 +50,7 @@
       .phone {
         position: relative;
         overflow: hidden;
-        min-height: 820px;
+        min-height: 850px;
         border: 1px solid rgba(226, 232, 240, 0.2);
         border-radius: 42px;
         background: linear-gradient(180deg, rgba(15, 23, 42, 0.97), var(--phone));
@@ -109,7 +110,7 @@
         box-shadow: 0 0 18px var(--accent-2);
       }
 
-      main { padding: 0 18px 110px; }
+      main { padding: 0 18px 116px; }
 
       .screen { display: none; animation: rise 260ms ease; }
       .screen.active { display: block; }
@@ -119,7 +120,7 @@
         to { opacity: 1; transform: translateY(0); }
       }
 
-      .hero-card, .card {
+      .hero-card, .card, .chat-panel {
         border: 1px solid var(--line);
         border-radius: 26px;
         background: var(--panel);
@@ -128,7 +129,6 @@
 
       .hero-card {
         padding: 20px;
-        min-height: 270px;
         background:
           linear-gradient(135deg, rgba(71, 215, 255, 0.16), transparent 52%),
           linear-gradient(180deg, rgba(17, 29, 49, 0.98), rgba(11, 19, 32, 0.98));
@@ -139,7 +139,7 @@
         grid-template-columns: 1fr auto 1fr;
         align-items: center;
         gap: 10px;
-        margin: 18px 0 22px;
+        margin: 18px 0 18px;
         color: #dce9ff;
       }
 
@@ -151,20 +151,21 @@
 
       .arrow { color: var(--accent); font-size: 22px; }
 
-      .alert {
-        padding: 16px;
+      .alert, .notice {
+        padding: 15px;
         border-radius: 20px;
-        background: rgba(255, 209, 102, 0.13);
         border: 1px solid rgba(255, 209, 102, 0.32);
+        background: rgba(255, 209, 102, 0.13);
+        margin-bottom: 10px;
       }
-
+      .notice { border-color: rgba(71, 215, 255, 0.26); background: rgba(71, 215, 255, 0.09); }
       .alert strong { color: #ffe2a3; }
       .muted { color: var(--muted); }
       .small { font-size: 12px; line-height: 1.55; }
 
       .primary-action {
         width: 100%;
-        margin-top: 16px;
+        margin-top: 12px;
         border: 0;
         border-radius: 18px;
         padding: 15px 18px;
@@ -186,78 +187,6 @@
       .card h2, .card h3 { margin: 0 0 8px; font-size: 18px; }
       .card p { margin: 0; color: #a9bad2; line-height: 1.62; }
 
-      .network-map {
-        position: relative;
-        height: 300px;
-        margin: 8px 0 16px;
-        border-radius: 26px;
-        overflow: hidden;
-        background:
-          linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-          linear-gradient(0deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-          rgba(15, 23, 42, 0.74);
-        background-size: 36px 36px;
-        border: 1px solid var(--line);
-      }
-
-      .road {
-        position: absolute;
-        left: -12%;
-        right: -12%;
-        top: 48%;
-        height: 54px;
-        transform: rotate(-12deg);
-        background: rgba(71, 85, 105, 0.42);
-        border-top: 1px dashed rgba(226, 232, 240, 0.3);
-        border-bottom: 1px dashed rgba(226, 232, 240, 0.3);
-      }
-
-      .car-node {
-        position: absolute;
-        display: grid;
-        place-items: center;
-        width: 58px;
-        height: 58px;
-        border-radius: 20px;
-        background: rgba(71, 215, 255, 0.16);
-        border: 1px solid rgba(71, 215, 255, 0.35);
-        box-shadow: 0 0 28px rgba(71, 215, 255, 0.18);
-        font-size: 24px;
-      }
-
-      .car-node.self { background: rgba(116, 247, 176, 0.16); border-color: rgba(116, 247, 176, 0.5); }
-      .car-node:nth-of-type(2) { left: 42%; top: 43%; }
-      .car-node:nth-of-type(3) { left: 12%; top: 28%; }
-      .car-node:nth-of-type(4) { right: 10%; top: 22%; }
-      .car-node:nth-of-type(5) { left: 18%; bottom: 12%; }
-      .car-node:nth-of-type(6) { right: 18%; bottom: 18%; }
-
-      .pulse-line {
-        position: absolute;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, var(--accent), transparent);
-        transform-origin: left center;
-        opacity: 0.8;
-        animation: pulse 1.8s infinite ease-in-out;
-      }
-
-      .line-a { width: 160px; left: 88px; top: 112px; transform: rotate(12deg); }
-      .line-b { width: 178px; left: 180px; top: 112px; transform: rotate(-8deg); animation-delay: 0.35s; }
-      .line-c { width: 142px; left: 86px; top: 214px; transform: rotate(-18deg); animation-delay: 0.7s; }
-      .line-d { width: 124px; left: 220px; top: 210px; transform: rotate(14deg); animation-delay: 1s; }
-
-      @keyframes pulse { 50% { opacity: 0.18; } }
-
-      .message {
-        display: flex;
-        gap: 10px;
-        align-items: flex-start;
-        padding: 12px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.055);
-        margin-bottom: 10px;
-      }
-
       .tag {
         display: inline-flex;
         padding: 4px 8px;
@@ -268,38 +197,52 @@
         font-weight: 800;
       }
 
-      .filter-stack { display: grid; gap: 12px; }
-      .filter-row {
-        display: grid;
-        grid-template-columns: 84px 1fr;
-        gap: 12px;
-        align-items: center;
-        padding: 14px;
+      .ask-box, .chat-input {
+        display: flex;
+        gap: 8px;
+        padding: 10px;
         border-radius: 20px;
-        border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.045);
+        background: rgba(255, 255, 255, 0.055);
+        border: 1px solid rgba(148, 163, 184, 0.18);
       }
-
-      .filter-row .state {
-        text-align: center;
-        padding: 8px;
+      input {
+        min-width: 0;
+        flex: 1;
+        border: 0;
+        outline: 0;
+        color: var(--text);
+        background: transparent;
+        font: inherit;
+      }
+      .send {
+        border: 0;
         border-radius: 14px;
-        font-size: 12px;
+        padding: 10px 12px;
+        color: #03111c;
+        background: var(--accent-2);
         font-weight: 900;
       }
 
-      .keep { color: #d1ffe7; background: rgba(34, 197, 94, 0.16); }
-      .hide { color: #c9d3e4; background: rgba(148, 163, 184, 0.14); }
-      .merge { color: #fff0c1; background: rgba(255, 209, 102, 0.14); }
-
-      .privacy-list { display: grid; gap: 12px; }
-      .privacy-item {
-        display: grid;
-        grid-template-columns: 42px 1fr;
-        gap: 12px;
-        align-items: start;
+      .chat-panel { padding: 14px; }
+      .bubble {
+        padding: 12px;
+        border-radius: 18px;
+        margin-bottom: 10px;
+        line-height: 1.55;
       }
+      .bubble.driver { margin-left: 48px; background: rgba(71, 215, 255, 0.16); }
+      .bubble.ai { margin-right: 28px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); }
 
+      .insight-grid { display: grid; gap: 12px; }
+      .insight-card {
+        display: grid;
+        grid-template-columns: 46px 1fr;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 22px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.045);
+      }
       .icon {
         width: 42px;
         height: 42px;
@@ -310,47 +253,83 @@
         border: 1px solid rgba(71, 215, 255, 0.22);
       }
 
-      .steps {
+      .network-map {
+        position: relative;
+        height: 235px;
+        margin: 8px 0 12px;
+        border-radius: 26px;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+          rgba(15, 23, 42, 0.74);
+        background-size: 36px 36px;
+        border: 1px solid var(--line);
+      }
+      .road {
+        position: absolute;
+        left: -12%; right: -12%; top: 48%; height: 54px;
+        transform: rotate(-12deg);
+        background: rgba(71, 85, 105, 0.42);
+        border-top: 1px dashed rgba(226, 232, 240, 0.3);
+        border-bottom: 1px dashed rgba(226, 232, 240, 0.3);
+      }
+      .car-node {
+        position: absolute;
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 7px;
-        margin: 14px 0 18px;
+        place-items: center;
+        width: 52px; height: 52px;
+        border-radius: 20px;
+        background: rgba(71, 215, 255, 0.16);
+        border: 1px solid rgba(71, 215, 255, 0.35);
+        box-shadow: 0 0 28px rgba(71, 215, 255, 0.18);
+        font-size: 22px;
       }
+      .car-node.self { background: rgba(116, 247, 176, 0.16); border-color: rgba(116, 247, 176, 0.5); }
+      .car-node:nth-of-type(2) { left: 42%; top: 43%; }
+      .car-node:nth-of-type(3) { left: 12%; top: 25%; }
+      .car-node:nth-of-type(4) { right: 10%; top: 18%; }
+      .car-node:nth-of-type(5) { left: 18%; bottom: 10%; }
+      .car-node:nth-of-type(6) { right: 18%; bottom: 14%; }
+      .pulse-line {
+        position: absolute;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        opacity: 0.8;
+        animation: pulse 1.8s infinite ease-in-out;
+      }
+      .line-a { width: 140px; left: 88px; top: 92px; transform: rotate(12deg); }
+      .line-b { width: 150px; left: 180px; top: 92px; transform: rotate(-8deg); animation-delay: 0.35s; }
+      .line-c { width: 132px; left: 86px; top: 172px; transform: rotate(-18deg); animation-delay: 0.7s; }
+      .line-d { width: 116px; left: 220px; top: 168px; transform: rotate(14deg); animation-delay: 1s; }
+      @keyframes pulse { 50% { opacity: 0.18; } }
 
-      .step {
-        height: 5px;
-        border-radius: 999px;
-        background: rgba(148, 163, 184, 0.28);
-      }
+      .signal { display: flex; justify-content: space-between; gap: 12px; padding: 11px 12px; margin-bottom: 8px; border-radius: 17px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(148, 163, 184, 0.14); }
+      .process { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+      .process span { padding: 9px; border-radius: 14px; background: rgba(116, 247, 176, 0.09); color: #d1ffe7; font-size: 12px; font-weight: 800; }
+      .demo-warning { border-color: rgba(255, 138, 138, 0.34); background: rgba(255, 138, 138, 0.1); }
+
+      .privacy-list { display: grid; gap: 12px; }
+      .privacy-item { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: start; }
+
+      .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin: 14px 0 18px; }
+      .step { height: 5px; border-radius: 999px; background: rgba(148, 163, 184, 0.28); }
       .step.on { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
 
       nav {
         position: absolute;
-        left: 18px;
-        right: 18px;
-        bottom: 18px;
+        left: 18px; right: 18px; bottom: 18px;
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
         padding: 10px;
         border: 1px solid var(--line);
         border-radius: 26px;
         background: rgba(2, 6, 23, 0.78);
         backdrop-filter: blur(18px);
       }
-
-      .nav-button {
-        border: 0;
-        border-radius: 18px;
-        padding: 10px 4px;
-        color: #90a4bd;
-        background: transparent;
-        font-size: 11px;
-        font-weight: 800;
-        cursor: pointer;
-      }
+      .nav-button { border: 0; border-radius: 16px; padding: 10px 3px; color: #90a4bd; background: transparent; font-size: 10px; font-weight: 800; cursor: pointer; }
       .nav-button.active { color: #05101d; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
-
       .caption { margin-top: 12px; text-align: center; color: #91a5bf; font-size: 12px; }
 
       @media (max-width: 430px) {
@@ -363,95 +342,98 @@
   </head>
   <body>
     <div class="page">
-      <p class="prototype-note">GitHub Pages ready / single index.html prototype</p>
-      <div class="phone" aria-label="車が読むSNSのスマホ画面風プロトタイプ">
+      <p class="prototype-note">人間には生の投稿を見せない / 自車AI要約プロトタイプ</p>
+      <div class="phone" aria-label="自車AIが匿名化された車SNSを読み取るプロトタイプ">
         <div class="notch" aria-hidden="true"></div>
         <header>
           <div>
-            <p class="eyebrow">CAR-TO-CAR SOCIAL</p>
-            <h1 id="screenTitle">車が読むSNS</h1>
+            <p class="eyebrow">MY CAR AI</p>
+            <h1 id="screenTitle">ドライバーホーム</h1>
           </div>
-          <div class="status-pill"><span class="dot"></span>AI接続中</div>
+          <div class="status-pill"><span class="dot"></span>要約中</div>
         </header>
 
         <main>
           <div class="steps" aria-label="画面の進行状況">
-            <span class="step on"></span><span class="step"></span><span class="step"></span><span class="step"></span>
+            <span class="step on"></span><span class="step"></span><span class="step"></span><span class="step"></span><span class="step"></span>
           </div>
 
-          <section class="screen active" data-title="ドライバー向けAI通知" id="screen-driver">
+          <section class="screen active" data-title="ドライバーホーム" id="screen-home">
             <div class="hero-card">
-              <span class="tag">運転手に届く情報だけ</span>
+              <span class="tag">人間側UI</span>
               <div class="route">
                 <div class="route-point"><strong>現在地</strong><br><span class="small muted">国道246</span></div>
                 <div class="arrow">→</div>
                 <div class="route-point"><strong>目的地</strong><br><span class="small muted">渋谷駅</span></div>
               </div>
-              <div class="alert">
-                <strong>2分後、左車線に落下物があります。</strong>
-                <p class="small">後続車3台と配送車1台の匿名レポートを自車AIが照合しました。次の信号後に中央車線へ。</p>
-              </div>
-              <button class="primary-action" data-next>車同士の会話をのぞく</button>
+              <div class="alert"><strong>この先2kmで急ブレーキが増えています。</strong><p class="small">速度を少し落としてください。複数車両の匿名信号を自車AIが照合しました。</p></div>
+              <div class="notice"><strong>目的地周辺の駐車場が混み始めています。</strong><p class="small">第2駐車場なら入庫待ちが短い見込みです。</p></div>
+              <div class="ask-box" aria-label="車に聞く入力欄"><input value="この先混んでる？" aria-label="車への質問"><button class="send" data-screen-jump="1">聞く</button></div>
             </div>
-
-            <p class="section-title">人間向けに要約された通知</p>
-            <div class="card"><h2>通知は1つだけ</h2><p>車同士の大量の投稿は直接見せず、運転に必要な結論だけを音声・画面で伝えます。</p></div>
-            <div class="card"><h2>SNSを見るのは車</h2><p>ドライバーはタイムラインを読まず、AIが判断した安全情報だけを受け取ります。</p></div>
+            <p class="section-title">この先の注意</p>
+            <div class="card"><h2>路面の水たまり情報</h2><p>この先、同じルートの車両から路面状態の変化が届いています。左寄りを避ける案内に切り替えます。</p></div>
           </section>
 
-          <section class="screen" data-title="匿名ネットワーク" id="screen-network">
-            <div class="network-map" aria-label="匿名化された車同士のネットワーク">
-              <div class="road"></div>
-              <div class="car-node self" title="自車">🚙</div>
-              <div class="car-node" title="匿名車両A">🚗</div>
-              <div class="car-node" title="匿名車両B">🚕</div>
-              <div class="car-node" title="匿名車両C">🚚</div>
-              <div class="car-node" title="匿名車両D">🚐</div>
+          <section class="screen" data-title="車に聞く" id="screen-ask">
+            <div class="chat-panel">
+              <span class="tag">他車の投稿本文は表示しません</span>
+              <div class="bubble driver">駐車場空いてる？</div>
+              <div class="bubble ai"><strong>自車AIの回答</strong><br>目的地周辺は入口Aが混み始めています。匿名化された駐車場混雑信号と到着予測から、第2駐車場をおすすめします。</div>
+              <div class="bubble driver">子供が休める場所ある？</div>
+              <div class="bubble ai"><strong>自車AIの回答</strong><br>この先8分のサービスエリアで休憩需要が増えています。混雑は中程度ですが、授乳室と屋内ベンチの利用余地があります。</div>
+              <div class="chat-input"><input value="この先混んでる？" aria-label="追加質問"><button class="send">送信</button></div>
+            </div>
+            <button class="primary-action" data-next>この先のインサイトを見る</button>
+          </section>
+
+          <section class="screen" data-title="この先のインサイト" id="screen-insights">
+            <div class="insight-grid">
+              <div class="insight-card"><div class="icon">🚦</div><div><strong>渋滞</strong><p class="small muted">3km先で流れが鈍化。到着は約4分遅れです。</p></div></div>
+              <div class="insight-card"><div class="icon">⚠️</div><div><strong>危険</strong><p class="small muted">急ブレーキ検知が増加。車間距離を長めに取ってください。</p></div></div>
+              <div class="insight-card"><div class="icon">🅿️</div><div><strong>駐車場</strong><p class="small muted">第1は混雑傾向、第2はまだ余裕があります。</p></div></div>
+              <div class="insight-card"><div class="icon">☕</div><div><strong>寄り道</strong><p class="small muted">右折なしで入れる休憩スポットがあります。</p></div></div>
+              <div class="insight-card"><div class="icon">👶</div><div><strong>子連れ向け</strong><p class="small muted">屋内休憩スペースがある施設をルート沿いに検出しました。</p></div></div>
+            </div>
+            <button class="primary-action" data-next>内部処理デモを見る</button>
+          </section>
+
+          <section class="screen" data-title="ユーザーには見えない内部処理" id="screen-internal">
+            <div class="card demo-warning"><h2>これは実際のユーザー画面ではありません</h2><p>ユーザーテストで世界観を説明するためのデモです。ドライバーは普段この内部処理を見ません。</p></div>
+            <div class="network-map" aria-label="車だけが読める匿名ネットワーク">
+              <div class="road"></div><div class="car-node self">🚙</div><div class="car-node">🚗</div><div class="car-node">🚕</div><div class="car-node">🚚</div><div class="car-node">🚐</div>
               <span class="pulse-line line-a"></span><span class="pulse-line line-b"></span><span class="pulse-line line-c"></span><span class="pulse-line line-d"></span>
             </div>
-            <div class="message"><span class="tag">匿名車両</span><p><strong>路面:</strong> 300m先、左寄りに小さな障害物を検知。</p></div>
-            <div class="message"><span class="tag">匿名車両</span><p><strong>流れ:</strong> 右折レーンの減速が増加。原因は工事車両。</p></div>
-            <div class="message"><span class="tag">自車AI</span><p><strong>照合:</strong> 複数情報が一致。ドライバーに1件だけ通知します。</p></div>
-            <button class="primary-action" data-next>AIのフィルターを見る</button>
+            <div class="signal"><strong>急ブレーキ検知</strong><span class="tag">3台一致</span></div>
+            <div class="signal"><strong>渋滞傾向</strong><span class="tag">速度低下</span></div>
+            <div class="signal"><strong>路面異常</strong><span class="tag">水たまり</span></div>
+            <div class="signal"><strong>駐車場混雑</strong><span class="tag">増加中</span></div>
+            <div class="signal"><strong>休憩スポット需要</strong><span class="tag">家族連れ</span></div>
+            <div class="process"><span>個人情報削除</span><span>位置情報をぼかす</span><span>関連度判定</span><span>危険度判定</span><span>複数車両で裏取り</span><span>ドライバー向け要約</span></div>
+            <button class="primary-action" data-next>プライバシーを見る</button>
           </section>
 
-          <section class="screen" data-title="自車AIフィルター" id="screen-filter">
-            <div class="card">
-              <h2>自車AIは、全部を人間に見せない</h2>
-              <p>位置・速度・進行方向・危険度から、今このドライバーに必要かを判定します。</p>
-            </div>
-            <div class="filter-stack">
-              <div class="filter-row"><div class="state keep">通知</div><div><strong>左車線の落下物</strong><p class="small muted">自車ルート上、2分以内、危険度高。</p></div></div>
-              <div class="filter-row"><div class="state merge">統合</div><div><strong>工事による減速</strong><p class="small muted">落下物通知の補足として裏側で加味。</p></div></div>
-              <div class="filter-row"><div class="state hide">非表示</div><div><strong>反対車線の混雑</strong><p class="small muted">現在の運転判断には不要なので表示しない。</p></div></div>
-              <div class="filter-row"><div class="state hide">非表示</div><div><strong>5km先の雑談的レポート</strong><p class="small muted">安全性・到着時刻に影響なし。</p></div></div>
-            </div>
-            <button class="primary-action" data-next>プライバシーの仕組みへ</button>
-          </section>
-
-          <section class="screen" data-title="プライバシー保護" id="screen-privacy">
-            <div class="card">
-              <h2>投稿者は人間ではなく、匿名化された車</h2>
-              <p>このSNSは「誰が何を言ったか」を楽しむ場ではありません。安全に必要な事実だけを、車同士が短時間共有します。</p>
-            </div>
+          <section class="screen" data-title="プライバシーと安全設計" id="screen-privacy">
+            <div class="card"><h2>車だけが読み、人間には必要な結論だけ</h2><p>このサービスは「車達のチャットを覗くSNS」ではありません。自車AIが匿名ネットワークを読み、運転に役立つ情報だけに変換します。</p></div>
             <div class="privacy-list">
-              <div class="privacy-item"><div class="icon">🛡️</div><div><strong>個人名・アカウントなし</strong><p class="small muted">ドライバーのプロフィールやフォロー関係は存在しません。</p></div></div>
-              <div class="privacy-item"><div class="icon">⏱️</div><div><strong>短時間で消える</strong><p class="small muted">危険が通り過ぎた情報は自動で期限切れになります。</p></div></div>
-              <div class="privacy-item"><div class="icon">📍</div><div><strong>必要な粒度だけ</strong><p class="small muted">正確な個人の移動履歴ではなく、運転判断に必要な範囲へ丸めます。</p></div></div>
-              <div class="privacy-item"><div class="icon">🤖</div><div><strong>人間には結論だけ</strong><p class="small muted">他人の投稿閲覧ではなく、自車AIからの安全アドバイスとして届きます。</p></div></div>
+              <div class="privacy-item"><div class="icon">🙈</div><div><strong>他車の投稿は読めない</strong><p class="small muted">ドライバー画面に生の投稿本文やチャットは出ません。</p></div></div>
+              <div class="privacy-item"><div class="icon">🧹</div><div><strong>個人情報は削除</strong><p class="small muted">個人名、アカウント、会話内容を扱わない設計です。</p></div></div>
+              <div class="privacy-item"><div class="icon">📍</div><div><strong>正確な位置はぼかす</strong><p class="small muted">運転判断に必要な範囲へ丸め、移動履歴として見せません。</p></div></div>
+              <div class="privacy-item"><div class="icon">💬</div><div><strong>生の会話は表示しない</strong><p class="small muted">匿名信号を自車AIが安全・渋滞・駐車場などの要約に変換します。</p></div></div>
+              <div class="privacy-item"><div class="icon">🚙</div><div><strong>自車に必要な情報だけ通知</strong><p class="small muted">ルート、距離、危険度に応じて不要な情報は抑制します。</p></div></div>
             </div>
-            <button class="primary-action" data-next>最初の通知に戻る</button>
+            <button class="primary-action" data-next>ホームに戻る</button>
           </section>
         </main>
 
         <nav aria-label="プロトタイプ画面遷移">
-          <button class="nav-button active" data-screen="0">通知</button>
-          <button class="nav-button" data-screen="1">車SNS</button>
-          <button class="nav-button" data-screen="2">AI選別</button>
-          <button class="nav-button" data-screen="3">保護</button>
+          <button class="nav-button active" data-screen="0">ホーム</button>
+          <button class="nav-button" data-screen="1">聞く</button>
+          <button class="nav-button" data-screen="2">洞察</button>
+          <button class="nav-button" data-screen="3">内部</button>
+          <button class="nav-button" data-screen="4">安全</button>
         </nav>
       </div>
-      <p class="caption">明日のユーザーテストでは下部タブ、または各画面のボタンで遷移できます。</p>
+      <p class="caption">下部タブ、または各画面のボタンで5画面を確認できます。</p>
     </div>
 
     <script>
@@ -475,6 +457,10 @@
 
       document.querySelectorAll('[data-next]').forEach((button) => {
         button.addEventListener('click', () => showScreen(current + 1));
+      });
+
+      document.querySelectorAll('[data-screen-jump]').forEach((button) => {
+        button.addEventListener('click', () => showScreen(Number(button.dataset.screenJump)));
       });
     </script>
   </body>
