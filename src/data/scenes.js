@@ -9,13 +9,13 @@ export const scenes = [
   {
     id: 'sceneA1', situation: '状況A', sceneNo: 1, image: `${base}assets/scenes/sceneA1.png`, title: '通常走行 / 背後で危険の兆候',
     nav: { aLane: 'fast', a: 45, b: 8, bLane: 'fast', zigzag: true, risk: 'LOW', speed: 'A車 92km/h / B車 遠方', distanceLabel: 'B車は後方数km', distance: 22 },
-    ai: ['後方から速度差の大きい車両を検知中'], driver: '後ろの状況はあまり気にしていないな…',
+    ai: ['後方から速度差の大きい車両を検知中'], voice: '後方から速度差の大きい車両を検知しています。', driver: '後ろの状況はあまり気にしていないな…',
     packets: ['B車 → Cloud：高速走行の兆候 / 車線ふらつき', 'A車AI：後方リスクを低優先で監視中'], internal: ['B車：「かなり速めに走行中」'], actions: ['next'], result: ''
   },
   {
     id: 'sceneA2', situation: '状況A', sceneNo: 2, image: `${base}assets/scenes/sceneA2.png`, title: '高速接近 / A車の近くにアラート',
     nav: { aLane: 'fast', a: 48, b: 26, bLane: 'fast', c: 10, zigzag: true, alert: true, risk: 'HIGH', speed: '速度差 大 / 接近中', distanceLabel: 'B車が急接近', distance: 38 },
-    ai: ['後方から高速接近する車両があります', '車線変更の可能性が高く、接近速度が大きいです'], driver: 'けっこう速い車が来てるんだな…',
+    ai: ['後方から高速接近する車両があります', '車線変更の可能性が高く、接近速度が大きいです'], voice: '後方から高速接近する車両があります。注意してください。', driver: 'けっこう速い車が来てるんだな…',
     packets: ['B車 → Cloud：speed=high / zigzag-lane-change', 'C車 → Cloud：急な追い抜きを検知', 'A車AI：通知準備'], internal: ['B車：「うちの運転手は140km/h出してる」', 'C車：「B車、めっちゃ速かった」'], actions: ['prev', 'listen', 'avoid', 'next'], result: ''
   },
   {
