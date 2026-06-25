@@ -1,136 +1,122 @@
 import { useEffect, useMemo, useState } from 'react'
 
-const categoryMeta = {
-  danger: { label: '危険', className: 'danger', button: '危険を投稿' },
-  traffic: { label: '渋滞', className: 'traffic', button: '渋滞を投稿' },
-  view: { label: '景色', className: 'view', button: '景色を投稿' },
-  shop: { label: '店舗', className: 'shop', button: '店舗情報を投稿' },
-  road: { label: '道路異常', className: 'road', button: '道路異常を投稿' },
-  casual: { label: '日常つぶやき', className: 'casual', button: '何気ないつぶやきを投稿' },
-}
-
-const templates = {
-  danger: '前方の黒い車、少しふらついてる',
-  traffic: 'この先、右車線が詰まり始めてる',
-  view: '夕日がきれい。写真撮れた',
-  shop: '近くのカフェ、駐車場空いてそう',
-  road: '路肩に落下物っぽいものあり',
-  casual: '今日はドライブ日和',
-}
-
-const initialPosts = [
-  { car: '車A', distance: '前方300m', place: '東名高速 上り / 岡崎付近', category: 'traffic', text: '追越車線、少し流れ速いです', photo: false, time: 'たった今', likes: 18, reposts: 5, comments: 3, x: 37, y: 43 },
-  { car: '車B', distance: '前方500m', place: '岡崎IC手前', category: 'danger', text: '黒のVOXY、ちょっとふらついてる。スマホ見てる？', photo: false, time: '15秒前', likes: 42, reposts: 16, comments: 9, x: 58, y: 30 },
-  { car: '車C', distance: '周辺1.2km', place: '矢作川付近', category: 'view', text: '夕日がきれい。助手席側から写真撮れた', photo: true, time: '30秒前', likes: 76, reposts: 21, comments: 12, x: 23, y: 20 },
-  { car: '車D', distance: '前方900m', place: '東名高速 上り', category: 'road', text: '路肩に落下物っぽいものあり', photo: false, time: '45秒前', likes: 55, reposts: 24, comments: 8, x: 70, y: 55 },
-  { car: '車E', distance: '周辺2.0km', place: '刈谷PA方面', category: 'shop', text: 'この先のSA、駐車場空いてます', photo: true, time: '1分前', likes: 31, reposts: 7, comments: 5, x: 82, y: 38 },
-  { car: '車F', distance: '後方500m', place: '岡崎付近', category: 'road', text: '雨で路面が滑りやすい', photo: false, time: '1分前', likes: 29, reposts: 10, comments: 4, x: 45, y: 69 },
-  { car: '車G', distance: '周辺800m', place: '国道1号沿い', category: 'shop', text: '近くのラーメン屋、駐車場空いてそう', photo: false, time: '2分前', likes: 64, reposts: 11, comments: 14, x: 18, y: 61 },
-  { car: '車H', distance: '前方250m', place: '東名高速 上り / 右車線', category: 'danger', text: '右車線で急ブレーキあり', photo: false, time: '2分前', likes: 88, reposts: 35, comments: 17, x: 52, y: 48 },
-  { car: '車I', distance: '周辺1.5km', place: '岡崎公園方面', category: 'view', text: '桜並木がきれい。写真あり', photo: true, time: '3分前', likes: 103, reposts: 28, comments: 19, x: 30, y: 78 },
-  { car: '車J', distance: '前方1.1km', place: '豊田JCT方面', category: 'traffic', text: '工事で左車線が少し狭い', photo: false, time: '3分前', likes: 37, reposts: 12, comments: 6, x: 76, y: 73 },
+const vehicleSignals = [
+  { car: '車A', kind: '状況データ', payload: '0xA7F9 / ENC', rate: '18 pkt/s', x: 34, y: 42, tone: 'traffic' },
+  { car: '車B', kind: '画像・位置情報', payload: 'IMG••• GPS≈300m', rate: '12 pkt/s', x: 58, y: 30, tone: 'danger' },
+  { car: '車C', kind: '道路状態', payload: 'RDS:MASKED', rate: '9 pkt/s', x: 25, y: 22, tone: 'road' },
+  { car: '車D', kind: '挙動データ', payload: 'GYRO••• SPD••', rate: '21 pkt/s', x: 72, y: 55, tone: 'danger' },
+  { car: '車E', kind: '写真データ', payload: 'PIX:AI-REDACT', rate: '7 pkt/s', x: 82, y: 38, tone: 'view' },
+  { car: '車F', kind: '路面データ', payload: 'µFRIC•••', rate: '11 pkt/s', x: 45, y: 69, tone: 'road' },
+  { car: '車G', kind: '混雑データ', payload: 'OCC≈LOW', rate: '14 pkt/s', x: 18, y: 61, tone: 'shop' },
+  { car: '車H', kind: '急制動イベント', payload: 'EVT:BRK•••', rate: '16 pkt/s', x: 52, y: 48, tone: 'danger' },
 ]
 
-const livePool = [
-  ['車K', '刈谷PA方面', 'shop', 'PAのベーカリー、まだ並び少なめ', true],
-  ['車L', '東名高速 上り / 岡崎付近', 'casual', '雲の切れ間から光が差してる', false],
-  ['車M', '岡崎IC手前', 'traffic', '合流で少しブレーキ多め', false],
-  ['車N', '国道248号方面', 'view', '田んぼに夕焼けが反射してる', true],
-  ['車O', '豊田JCT方面', 'road', '舗装の継ぎ目で少し跳ねます', false],
-  ['車P', '東名高速 上り', 'danger', '車間距離が近い車がいます', false],
+const driverSummaries = [
+  { type: '危険情報', level: '注意', text: '前方300m、右車線にふらつき傾向の車両があります', source: '周辺車両 3台の挙動データから抽出' },
+  { type: '休憩候補', level: '快適', text: 'この先のSAは駐車場に余裕があります', source: '匿名の混雑データをエリア単位で集計' },
+  { type: '景色', level: '発見', text: '岡崎付近で夕焼けの投稿が増えています', source: 'AIが個人情報をマスクした写真傾向' },
+  { type: '道路状態', level: '注意', text: '路肩に落下物の可能性があります', source: '道路状態データ 42件から候補を検出' },
 ]
 
-function makePost(category, isMine = false) {
-  const count = Math.floor(Math.random() * 900) + 120
-  return {
-    car: isMine ? 'あなたの車' : livePool[Math.floor(Math.random() * livePool.length)][0],
-    distance: isMine ? '現在地' : `${Math.random() > 0.5 ? '前方' : '周辺'}${count}m`,
-    place: isMine ? '東名高速 上り / あなたの現在地' : livePool[Math.floor(Math.random() * livePool.length)][1],
-    category,
-    text: isMine ? templates[category] : livePool.filter((p) => p[2] === category)[0]?.[3] || templates[category],
-    photo: category === 'view' || category === 'shop',
-    time: 'たった今',
-    likes: Math.floor(Math.random() * 20),
-    reposts: Math.floor(Math.random() * 9),
-    comments: Math.floor(Math.random() * 6),
-    x: isMine ? 50 : Math.floor(Math.random() * 70) + 14,
-    y: isMine ? 58 : Math.floor(Math.random() * 60) + 18,
-    fresh: true,
-  }
-}
+const privacyItems = [
+  '生ツイートは人間には非表示',
+  '個人情報はAIが自動マスク',
+  '自車に有益な情報だけを要約',
+  '位置情報は必要範囲に丸めて利用',
+]
+
+const counters = [
+  ['周辺車両からの投稿', '128件/分'],
+  ['写真データ', '18件'],
+  ['道路状態データ', '42件'],
+  ['AIが運転者向けに抽出した情報', '3件'],
+]
 
 function App() {
-  const [posts, setPosts] = useState(initialPosts)
   const [live, setLive] = useState(false)
+  const [pulse, setPulse] = useState(128)
   const [view, setView] = useState('live')
 
   useEffect(() => {
     if (!live) return undefined
-    const id = setInterval(() => {
-      const sample = livePool[Math.floor(Math.random() * livePool.length)]
-      setPosts((current) => [makePost(sample[2]), ...current].slice(0, 16))
-    }, 3200)
+    const id = setInterval(() => setPulse((current) => (current >= 146 ? 121 : current + 3)), 1800)
     return () => clearInterval(id)
   }, [live])
 
-  const mapPosts = useMemo(() => posts.slice(0, 9), [posts])
-
-  const addPost = (category) => setPosts((current) => [makePost(category, true), ...current].slice(0, 16))
+  const dataCounters = useMemo(() => counters.map((counter, index) => (
+    index === 0 ? [counter[0], `${pulse}件/分`] : counter
+  )), [pulse])
 
   if (view === 'data') return <DataCloud onBack={() => setView('live')} />
 
   return (
     <main className="app-shell">
       <header className="hero">
-        <div><p className="eyebrow">CAR-TO-CAR SOCIAL GRAPH</p><h1>CarTweet Live</h1><p>クルマが見た世界を、リアルタイムにつぶやく。</p></div>
-        <button className={`live-button ${live ? 'is-live' : ''}`} onClick={() => setLive(!live)}>{live ? 'ライブ中' : 'ライブ開始'}</button>
+        <div>
+          <p className="eyebrow">PRIVATE CAR-TO-CAR SOCIAL GRAPH</p>
+          <h1>CarTweet AI Relay</h1>
+          <p>車同士の非公開SNSを、自車AIが運転者向けに安全翻訳する。</p>
+        </div>
+        <button className={`live-button ${live ? 'is-live' : ''}`} onClick={() => setLive(!live)}>{live ? 'クラウド受信中' : '受信開始'}</button>
       </header>
 
-      <section className="ai-summary">
-        <strong>AIリアルタイムまとめ</strong>
-        <span>追越車線にふらつき車両の投稿が3件</span><span>岡崎付近で夕焼け写真の投稿が増加</span><span>刈谷PAは駐車場に余裕あり</span><span>この先3km、右車線の流れが悪化傾向</span>
+      <section className="worldview panel">
+        <strong>CarTweetは人間向けSNSではありません。</strong>
+        <span>車が街や道路を大量に観測し、クラウド上で非公開に投稿。</span>
+        <span>人間には生投稿を見せず、自車AIが安全・快適・便利につながる情報だけを要約します。</span>
       </section>
 
       <section className="workspace">
         <section className="map-panel panel">
-          <div className="section-title"><h2>ライブマップ</h2><span>東名高速 上り / 岡崎付近</span></div>
+          <div className="section-title">
+            <h2>車同士の非公開SNSレイヤー</h2>
+            <span>東名高速 上り / 岡崎付近</span>
+          </div>
           <div className="map-canvas">
             <span className="label label-a">東名高速 上り</span><span className="label label-b">岡崎付近</span><span className="label label-c">刈谷PA方面</span>
             <div className="road highway"></div><div className="road city-road one"></div><div className="road city-road two"></div><div className="river"></div>
-            {mapPosts.map((post, index) => <MapCar key={`${post.car}-${post.time}-${index}`} post={post} />)}
-            <div className="you-pulse">あなたの車</div>
+            <div className="cloud-node">CarTweet<br />Cloud</div>
+            {vehicleSignals.map((signal, index) => <SignalCar key={signal.car} signal={signal} index={index} />)}
+            <div className="you-pulse">自車AI</div>
           </div>
+          <div className="private-note">生の投稿本文は人間には表示されません。車専用の非公開会話として暗号化・匿名化されます。</div>
         </section>
 
-        <section className="timeline panel">
-          <div className="section-title"><h2>車専用SNSタイムライン</h2><span>{posts.length} live posts</span></div>
-          <div className="posts">{posts.map((post, index) => <PostCard key={`${post.car}-${post.text}-${index}`} post={post} />)}</div>
-        </section>
+        <aside className="driver-panel panel">
+          <div className="section-title stacked">
+            <div><h2>運転者向けAI要約</h2><span>自車に関係ある情報だけを短く表示</span></div>
+          </div>
+          <div className="summary-list">
+            {driverSummaries.map((summary) => <SummaryCard key={summary.text} summary={summary} />)}
+          </div>
+          <PrivacyGuard />
+        </aside>
       </section>
 
-      <footer className="composer panel">
-        <div><strong>自車から投稿</strong><p>ワンタップで「あなたの車」から位置情報つき投稿を追加します。</p></div>
-        <div className="compose-buttons">{Object.entries(categoryMeta).map(([key, meta]) => <button key={key} className={meta.className} onClick={() => addPost(key)}>{meta.button}</button>)}</div>
-      </footer>
+      <section className="metrics panel">
+        {dataCounters.map(([label, value]) => <div className="metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}
+      </section>
       <button className="data-switch" onClick={() => setView('data')}>データ活用を見る →</button>
     </main>
   )
 }
 
-function MapCar({ post }) {
-  const meta = categoryMeta[post.category]
-  return <div className={`map-car ${meta.className} ${post.car === 'あなたの車' ? 'mine' : ''}`} style={{ left: `${post.x}%`, top: `${post.y}%` }}><div className="bubble">{post.photo && <i />}<b>{meta.label}</b>{post.text}</div><div className="car-icon">▰</div></div>
+function SignalCar({ signal, index }) {
+  return <div className={`map-car ${signal.tone}`} style={{ left: `${signal.x}%`, top: `${signal.y}%`, '--delay': `${index * .18}s` }}><div className="signal-line" /><div className="packet"><b>{signal.car} → Cloud</b><span>{signal.kind} 送信</span><code>{signal.payload}</code><small>{signal.rate}</small></div><div className="car-icon">▰</div></div>
 }
 
-function PostCard({ post }) {
-  const meta = categoryMeta[post.category]
-  return <article className={`post-card ${post.fresh ? 'fresh' : ''}`}><div className="post-head"><div><strong>{post.car}</strong><small>{post.distance} ・ {post.place}</small></div><span className={`tag ${meta.className}`}>{meta.label}</span></div><p>{post.text}</p>{post.photo && <div className="photo-thumb"><span>PHOTO</span></div>}<div className="reactions"><span>♡ {post.likes}</span><span>↻ {post.reposts}</span><span>💬 {post.comments}</span><time>{post.time}</time></div></article>
+function SummaryCard({ summary }) {
+  return <article className="summary-card"><div><span className="summary-type">{summary.type}</span><b>{summary.level}</b></div><p>{summary.text}</p><small>{summary.source}</small></article>
+}
+
+function PrivacyGuard() {
+  return <section className="privacy-card"><h3>Privacy Guard</h3>{privacyItems.map((item) => <div key={item}>✓ {item}</div>)}</section>
 }
 
 function DataCloud({ onBack }) {
-  const data = ['危険運転', '渋滞の前兆', '道路異常', '景色/観光スポット', '店舗/SA/PA混雑', '駐車場空き状況', '天候/路面状態', '地域ごとの移動傾向']
-  const services = ['リアルタイム安全支援', '道路管理/自治体向けレポート', '観光スポット発見', '店舗送客/広告', '保険リスク分析', '災害時の現地情報収集', 'トヨタ車オーナー向け体験提案']
-  return <main className="app-shell data-view"><header className="hero"><div><p className="eyebrow">FUTURE DATA PLATFORM</p><h1>CarTweet Data Cloud</h1><p>全国の車のつぶやきが、リアルワールドデータになる。</p></div><button className="live-button" onClick={onBack}>Liveへ戻る</button></header><section className="cloud-grid"><ListPanel title="蓄積されるデータ" items={data} /><div className="cloud-core panel"><div className="mini-cards"><span>全国の車</span><b>→</b><span>位置情報つき投稿</span></div><div className="ai-orb">AI解析<br /><small>CarTweet Cloud</small></div><div className="service-rays"><span>安全</span><span>観光</span><span>店舗</span><span>自治体</span><span>保険</span><span>防災</span></div></div><ListPanel title="将来広がるサービス" items={services} /></section></main>
+  const data = ['匿名化された車両投稿', 'AIマスク済み写真傾向', '丸めた位置情報', '道路状態/混雑/危険兆候', '地域ごとの移動傾向']
+  const services = ['リアルタイム安全支援', '道路管理/自治体向けレポート', '観光スポット発見', '店舗/SA/PA混雑予測', '災害時の現地情報収集']
+  return <main className="app-shell data-view"><header className="hero"><div><p className="eyebrow">REAL WORLD DATA PLATFORM</p><h1>CarTweet Data Cloud</h1><p>車同士の非公開SNSが、プライバシー保護されたリアルワールドデータ基盤になる。</p></div><button className="live-button" onClick={onBack}>Liveへ戻る</button></header><section className="cloud-grid"><ListPanel title="蓄積されるデータ" items={data} /><div className="cloud-core panel"><div className="mini-cards"><span>全国の車</span><b>→</b><span>非公開投稿</span></div><div className="ai-orb">AI解析<br /><small>Privacy by Design</small></div><div className="service-rays"><span>安全</span><span>観光</span><span>店舗</span><span>自治体</span><span>防災</span></div></div><ListPanel title="将来広がるサービス" items={services} /></section></main>
 }
 
 function ListPanel({ title, items }) { return <section className="panel list-panel"><h2>{title}</h2>{items.map((item) => <div className="list-item" key={item}>{item}</div>)}</section> }
