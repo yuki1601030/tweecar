@@ -3,10 +3,479 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CarTweet Live</title>
+    <title>車が読むSNS / 人間には必要情報だけ届く</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07111f;
+        --phone: #0b1320;
+        --panel: rgba(18, 28, 46, 0.9);
+        --panel-strong: #111d31;
+        --line: rgba(148, 163, 184, 0.24);
+        --text: #e5f0ff;
+        --muted: #8fa3bf;
+        --accent: #47d7ff;
+        --accent-2: #74f7b0;
+        --warn: #ffd166;
+        --danger: #ff8a8a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 20% 10%, rgba(71, 215, 255, 0.22), transparent 26rem),
+          radial-gradient(circle at 90% 15%, rgba(116, 247, 176, 0.14), transparent 22rem),
+          linear-gradient(135deg, #07111f 0%, #0d1528 48%, #050812 100%);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .page { width: min(100%, 430px); }
+
+      .prototype-note {
+        text-align: center;
+        margin: 0 0 14px;
+        color: #b9c7da;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+      }
+
+      .phone {
+        position: relative;
+        overflow: hidden;
+        min-height: 820px;
+        border: 1px solid rgba(226, 232, 240, 0.2);
+        border-radius: 42px;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.97), var(--phone));
+        box-shadow: 0 26px 80px rgba(0, 0, 0, 0.45), inset 0 0 0 8px rgba(255, 255, 255, 0.025);
+      }
+
+      .notch {
+        width: 128px;
+        height: 28px;
+        margin: 12px auto 0;
+        border-radius: 0 0 18px 18px;
+        background: #020617;
+      }
+
+      header {
+        padding: 18px 22px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        color: var(--accent-2);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 25px;
+        line-height: 1.2;
+        letter-spacing: -0.04em;
+      }
+
+      .status-pill {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 10px;
+        border: 1px solid rgba(116, 247, 176, 0.34);
+        border-radius: 999px;
+        color: #c7ffe0;
+        background: rgba(34, 197, 94, 0.08);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent-2);
+        box-shadow: 0 0 18px var(--accent-2);
+      }
+
+      main { padding: 0 18px 110px; }
+
+      .screen { display: none; animation: rise 260ms ease; }
+      .screen.active { display: block; }
+
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .hero-card, .card {
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        background: var(--panel);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+      }
+
+      .hero-card {
+        padding: 20px;
+        min-height: 270px;
+        background:
+          linear-gradient(135deg, rgba(71, 215, 255, 0.16), transparent 52%),
+          linear-gradient(180deg, rgba(17, 29, 49, 0.98), rgba(11, 19, 32, 0.98));
+      }
+
+      .route {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 10px;
+        margin: 18px 0 22px;
+        color: #dce9ff;
+      }
+
+      .route-point {
+        padding: 12px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.055);
+      }
+
+      .arrow { color: var(--accent); font-size: 22px; }
+
+      .alert {
+        padding: 16px;
+        border-radius: 20px;
+        background: rgba(255, 209, 102, 0.13);
+        border: 1px solid rgba(255, 209, 102, 0.32);
+      }
+
+      .alert strong { color: #ffe2a3; }
+      .muted { color: var(--muted); }
+      .small { font-size: 12px; line-height: 1.55; }
+
+      .primary-action {
+        width: 100%;
+        margin-top: 16px;
+        border: 0;
+        border-radius: 18px;
+        padding: 15px 18px;
+        color: #03111c;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        font-weight: 800;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
+      .section-title {
+        margin: 22px 4px 10px;
+        color: #d4e5fb;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .card { padding: 16px; margin-bottom: 12px; }
+      .card h2, .card h3 { margin: 0 0 8px; font-size: 18px; }
+      .card p { margin: 0; color: #a9bad2; line-height: 1.62; }
+
+      .network-map {
+        position: relative;
+        height: 300px;
+        margin: 8px 0 16px;
+        border-radius: 26px;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+          rgba(15, 23, 42, 0.74);
+        background-size: 36px 36px;
+        border: 1px solid var(--line);
+      }
+
+      .road {
+        position: absolute;
+        left: -12%;
+        right: -12%;
+        top: 48%;
+        height: 54px;
+        transform: rotate(-12deg);
+        background: rgba(71, 85, 105, 0.42);
+        border-top: 1px dashed rgba(226, 232, 240, 0.3);
+        border-bottom: 1px dashed rgba(226, 232, 240, 0.3);
+      }
+
+      .car-node {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        width: 58px;
+        height: 58px;
+        border-radius: 20px;
+        background: rgba(71, 215, 255, 0.16);
+        border: 1px solid rgba(71, 215, 255, 0.35);
+        box-shadow: 0 0 28px rgba(71, 215, 255, 0.18);
+        font-size: 24px;
+      }
+
+      .car-node.self { background: rgba(116, 247, 176, 0.16); border-color: rgba(116, 247, 176, 0.5); }
+      .car-node:nth-of-type(2) { left: 42%; top: 43%; }
+      .car-node:nth-of-type(3) { left: 12%; top: 28%; }
+      .car-node:nth-of-type(4) { right: 10%; top: 22%; }
+      .car-node:nth-of-type(5) { left: 18%; bottom: 12%; }
+      .car-node:nth-of-type(6) { right: 18%; bottom: 18%; }
+
+      .pulse-line {
+        position: absolute;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        transform-origin: left center;
+        opacity: 0.8;
+        animation: pulse 1.8s infinite ease-in-out;
+      }
+
+      .line-a { width: 160px; left: 88px; top: 112px; transform: rotate(12deg); }
+      .line-b { width: 178px; left: 180px; top: 112px; transform: rotate(-8deg); animation-delay: 0.35s; }
+      .line-c { width: 142px; left: 86px; top: 214px; transform: rotate(-18deg); animation-delay: 0.7s; }
+      .line-d { width: 124px; left: 220px; top: 210px; transform: rotate(14deg); animation-delay: 1s; }
+
+      @keyframes pulse { 50% { opacity: 0.18; } }
+
+      .message {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 12px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.055);
+        margin-bottom: 10px;
+      }
+
+      .tag {
+        display: inline-flex;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(71, 215, 255, 0.12);
+        color: #9beaff;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .filter-stack { display: grid; gap: 12px; }
+      .filter-row {
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 12px;
+        align-items: center;
+        padding: 14px;
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.045);
+      }
+
+      .filter-row .state {
+        text-align: center;
+        padding: 8px;
+        border-radius: 14px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .keep { color: #d1ffe7; background: rgba(34, 197, 94, 0.16); }
+      .hide { color: #c9d3e4; background: rgba(148, 163, 184, 0.14); }
+      .merge { color: #fff0c1; background: rgba(255, 209, 102, 0.14); }
+
+      .privacy-list { display: grid; gap: 12px; }
+      .privacy-item {
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 15px;
+        background: rgba(71, 215, 255, 0.12);
+        border: 1px solid rgba(71, 215, 255, 0.22);
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 7px;
+        margin: 14px 0 18px;
+      }
+
+      .step {
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.28);
+      }
+      .step.on { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+      nav {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 18px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        background: rgba(2, 6, 23, 0.78);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav-button {
+        border: 0;
+        border-radius: 18px;
+        padding: 10px 4px;
+        color: #90a4bd;
+        background: transparent;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .nav-button.active { color: #05101d; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+
+      .caption { margin-top: 12px; text-align: center; color: #91a5bf; font-size: 12px; }
+
+      @media (max-width: 430px) {
+        body { padding: 0; background: #07111f; }
+        .page { width: 100%; }
+        .prototype-note, .caption { display: none; }
+        .phone { min-height: 100vh; border-radius: 0; border: 0; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div class="page">
+      <p class="prototype-note">GitHub Pages ready / single index.html prototype</p>
+      <div class="phone" aria-label="車が読むSNSのスマホ画面風プロトタイプ">
+        <div class="notch" aria-hidden="true"></div>
+        <header>
+          <div>
+            <p class="eyebrow">CAR-TO-CAR SOCIAL</p>
+            <h1 id="screenTitle">車が読むSNS</h1>
+          </div>
+          <div class="status-pill"><span class="dot"></span>AI接続中</div>
+        </header>
+
+        <main>
+          <div class="steps" aria-label="画面の進行状況">
+            <span class="step on"></span><span class="step"></span><span class="step"></span><span class="step"></span>
+          </div>
+
+          <section class="screen active" data-title="ドライバー向けAI通知" id="screen-driver">
+            <div class="hero-card">
+              <span class="tag">運転手に届く情報だけ</span>
+              <div class="route">
+                <div class="route-point"><strong>現在地</strong><br><span class="small muted">国道246</span></div>
+                <div class="arrow">→</div>
+                <div class="route-point"><strong>目的地</strong><br><span class="small muted">渋谷駅</span></div>
+              </div>
+              <div class="alert">
+                <strong>2分後、左車線に落下物があります。</strong>
+                <p class="small">後続車3台と配送車1台の匿名レポートを自車AIが照合しました。次の信号後に中央車線へ。</p>
+              </div>
+              <button class="primary-action" data-next>車同士の会話をのぞく</button>
+            </div>
+
+            <p class="section-title">人間向けに要約された通知</p>
+            <div class="card"><h2>通知は1つだけ</h2><p>車同士の大量の投稿は直接見せず、運転に必要な結論だけを音声・画面で伝えます。</p></div>
+            <div class="card"><h2>SNSを見るのは車</h2><p>ドライバーはタイムラインを読まず、AIが判断した安全情報だけを受け取ります。</p></div>
+          </section>
+
+          <section class="screen" data-title="匿名ネットワーク" id="screen-network">
+            <div class="network-map" aria-label="匿名化された車同士のネットワーク">
+              <div class="road"></div>
+              <div class="car-node self" title="自車">🚙</div>
+              <div class="car-node" title="匿名車両A">🚗</div>
+              <div class="car-node" title="匿名車両B">🚕</div>
+              <div class="car-node" title="匿名車両C">🚚</div>
+              <div class="car-node" title="匿名車両D">🚐</div>
+              <span class="pulse-line line-a"></span><span class="pulse-line line-b"></span><span class="pulse-line line-c"></span><span class="pulse-line line-d"></span>
+            </div>
+            <div class="message"><span class="tag">匿名車両</span><p><strong>路面:</strong> 300m先、左寄りに小さな障害物を検知。</p></div>
+            <div class="message"><span class="tag">匿名車両</span><p><strong>流れ:</strong> 右折レーンの減速が増加。原因は工事車両。</p></div>
+            <div class="message"><span class="tag">自車AI</span><p><strong>照合:</strong> 複数情報が一致。ドライバーに1件だけ通知します。</p></div>
+            <button class="primary-action" data-next>AIのフィルターを見る</button>
+          </section>
+
+          <section class="screen" data-title="自車AIフィルター" id="screen-filter">
+            <div class="card">
+              <h2>自車AIは、全部を人間に見せない</h2>
+              <p>位置・速度・進行方向・危険度から、今このドライバーに必要かを判定します。</p>
+            </div>
+            <div class="filter-stack">
+              <div class="filter-row"><div class="state keep">通知</div><div><strong>左車線の落下物</strong><p class="small muted">自車ルート上、2分以内、危険度高。</p></div></div>
+              <div class="filter-row"><div class="state merge">統合</div><div><strong>工事による減速</strong><p class="small muted">落下物通知の補足として裏側で加味。</p></div></div>
+              <div class="filter-row"><div class="state hide">非表示</div><div><strong>反対車線の混雑</strong><p class="small muted">現在の運転判断には不要なので表示しない。</p></div></div>
+              <div class="filter-row"><div class="state hide">非表示</div><div><strong>5km先の雑談的レポート</strong><p class="small muted">安全性・到着時刻に影響なし。</p></div></div>
+            </div>
+            <button class="primary-action" data-next>プライバシーの仕組みへ</button>
+          </section>
+
+          <section class="screen" data-title="プライバシー保護" id="screen-privacy">
+            <div class="card">
+              <h2>投稿者は人間ではなく、匿名化された車</h2>
+              <p>このSNSは「誰が何を言ったか」を楽しむ場ではありません。安全に必要な事実だけを、車同士が短時間共有します。</p>
+            </div>
+            <div class="privacy-list">
+              <div class="privacy-item"><div class="icon">🛡️</div><div><strong>個人名・アカウントなし</strong><p class="small muted">ドライバーのプロフィールやフォロー関係は存在しません。</p></div></div>
+              <div class="privacy-item"><div class="icon">⏱️</div><div><strong>短時間で消える</strong><p class="small muted">危険が通り過ぎた情報は自動で期限切れになります。</p></div></div>
+              <div class="privacy-item"><div class="icon">📍</div><div><strong>必要な粒度だけ</strong><p class="small muted">正確な個人の移動履歴ではなく、運転判断に必要な範囲へ丸めます。</p></div></div>
+              <div class="privacy-item"><div class="icon">🤖</div><div><strong>人間には結論だけ</strong><p class="small muted">他人の投稿閲覧ではなく、自車AIからの安全アドバイスとして届きます。</p></div></div>
+            </div>
+            <button class="primary-action" data-next>最初の通知に戻る</button>
+          </section>
+        </main>
+
+        <nav aria-label="プロトタイプ画面遷移">
+          <button class="nav-button active" data-screen="0">通知</button>
+          <button class="nav-button" data-screen="1">車SNS</button>
+          <button class="nav-button" data-screen="2">AI選別</button>
+          <button class="nav-button" data-screen="3">保護</button>
+        </nav>
+      </div>
+      <p class="caption">明日のユーザーテストでは下部タブ、または各画面のボタンで遷移できます。</p>
+    </div>
+
+    <script>
+      const screens = Array.from(document.querySelectorAll('.screen'));
+      const navButtons = Array.from(document.querySelectorAll('.nav-button'));
+      const steps = Array.from(document.querySelectorAll('.step'));
+      const title = document.querySelector('#screenTitle');
+      let current = 0;
+
+      function showScreen(index) {
+        current = (index + screens.length) % screens.length;
+        screens.forEach((screen, i) => screen.classList.toggle('active', i === current));
+        navButtons.forEach((button, i) => button.classList.toggle('active', i === current));
+        steps.forEach((step, i) => step.classList.toggle('on', i <= current));
+        title.textContent = screens[current].dataset.title;
+      }
+
+      navButtons.forEach((button) => {
+        button.addEventListener('click', () => showScreen(Number(button.dataset.screen)));
+      });
+
+      document.querySelectorAll('[data-next]').forEach((button) => {
+        button.addEventListener('click', () => showScreen(current + 1));
+      });
+    </script>
   </body>
 </html>
