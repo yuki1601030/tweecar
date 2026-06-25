@@ -1,124 +1,121 @@
 import { useEffect, useMemo, useState } from 'react'
 
-const vehicleSignals = [
-  { car: '車A', kind: '状況データ', payload: '0xA7F9 / ENC', rate: '18 pkt/s', x: 34, y: 42, tone: 'traffic' },
-  { car: '車B', kind: '画像・位置情報', payload: 'IMG••• GPS≈300m', rate: '12 pkt/s', x: 58, y: 30, tone: 'danger' },
-  { car: '車C', kind: '道路状態', payload: 'RDS:MASKED', rate: '9 pkt/s', x: 25, y: 22, tone: 'road' },
-  { car: '車D', kind: '挙動データ', payload: 'GYRO••• SPD••', rate: '21 pkt/s', x: 72, y: 55, tone: 'danger' },
-  { car: '車E', kind: '写真データ', payload: 'PIX:AI-REDACT', rate: '7 pkt/s', x: 82, y: 38, tone: 'view' },
-  { car: '車F', kind: '路面データ', payload: 'µFRIC•••', rate: '11 pkt/s', x: 45, y: 69, tone: 'road' },
-  { car: '車G', kind: '混雑データ', payload: 'OCC≈LOW', rate: '14 pkt/s', x: 18, y: 61, tone: 'shop' },
-  { car: '車H', kind: '急制動イベント', payload: 'EVT:BRK•••', rate: '16 pkt/s', x: 52, y: 48, tone: 'danger' },
+const aiDeck = [
+  { id: 'pa', icon: '🅿️', tone: 'good', title: '刈谷PAは駐車場に余裕', text: '10分先。大型・普通車ともに空き傾向です。', actions: ['立ち寄る', 'スキップ'] },
+  { id: 'view', icon: '🌇', tone: 'view', title: '岡崎付近で景色データ増加', text: '左手の夕景が高評価。安全な範囲で表示できます。', actions: ['表示する', '閉じる'] },
+  { id: 'danger', icon: '⚠️', tone: 'alert', title: '前方300m、右車線に注意', text: '複数車両の挙動から、ふらつき傾向を検出しました。', actions: ['了解', '詳しく見る'] },
+  { id: 'traffic', icon: '↗', tone: 'route', title: 'この先3kmで流れが悪化', text: '中央車線が詰まり始めています。推奨ルートに反映できます。', actions: ['ルート反映', 'あとで'] },
+  { id: 'road', icon: '◇', tone: 'alert', title: '路肩に落下物の可能性', text: '画像解析と急ハンドル情報から候補を検出しました。', actions: ['了解', '詳しく見る'] },
 ]
 
-const driverSummaries = [
-  { type: '危険情報', level: '注意', text: '前方300m、右車線にふらつき傾向の車両があります', source: '周辺車両 3台の挙動データから抽出' },
-  { type: '休憩候補', level: '快適', text: 'この先のSAは駐車場に余裕があります', source: '匿名の混雑データをエリア単位で集計' },
-  { type: '景色', level: '発見', text: '岡崎付近で夕焼けの投稿が増えています', source: 'AIが個人情報をマスクした写真傾向' },
-  { type: '道路状態', level: '注意', text: '路肩に落下物の可能性があります', source: '道路状態データ 42件から候補を検出' },
+const shareButtons = [
+  ['危険を共有', 'danger'], ['渋滞を共有', 'traffic'], ['景色を共有', 'view'],
+  ['休憩情報を共有', 'pa'], ['道路異常を共有', 'road'], ['音声で報告', 'voice'],
 ]
 
-const privacyItems = [
-  '生ツイートは人間には非表示',
-  '個人情報はAIが自動マスク',
-  '自車に有益な情報だけを要約',
-  '位置情報は必要範囲に丸めて利用',
-]
-
-const counters = [
-  ['周辺車両からの投稿', '128件/分'],
-  ['写真データ', '18件'],
-  ['道路状態データ', '42件'],
-  ['AIが運転者向けに抽出した情報', '3件'],
-]
+const future = ['安全支援', '道路管理', '観光', '店舗送客', '保険', '防災']
 
 function App() {
-  const [live, setLive] = useState(false)
-  const [pulse, setPulse] = useState(128)
-  const [view, setView] = useState('live')
+  const [intro, setIntro] = useState(true)
+  const [driving, setDriving] = useState(false)
+  const [tick, setTick] = useState(0)
+  const [step, setStep] = useState(1)
+  const [cards, setCards] = useState(aiDeck.slice(0, 2))
+  const [route, setRoute] = useState('自宅 → 刈谷PA → 名古屋方面')
+  const [toast, setToast] = useState('')
+  const [voice, setVoice] = useState(false)
+  const [effects, setEffects] = useState({ route: false, pa: false, view: 34, shared: 0 })
 
   useEffect(() => {
-    if (!live) return undefined
-    const id = setInterval(() => setPulse((current) => (current >= 146 ? 121 : current + 3)), 1800)
+    if (!driving) return undefined
+    const id = setInterval(() => setTick((n) => n + 1), 1200)
     return () => clearInterval(id)
-  }, [live])
+  }, [driving])
 
-  const dataCounters = useMemo(() => counters.map((counter, index) => (
-    index === 0 ? [counter[0], `${pulse}件/分`] : counter
-  )), [pulse])
+  useEffect(() => {
+    if (!driving) return
+    if (tick > 2) { setStep(2); setCards(aiDeck.slice(0, 2)) }
+    if (tick > 6) { setStep(3); setCards([aiDeck[2], aiDeck[3], aiDeck[0]]) }
+    if (tick > 11) { setStep(4); setCards([aiDeck[2], aiDeck[4], aiDeck[3]]) }
+    if (tick > 17) { setStep(5); setCards([aiDeck[4], aiDeck[3], aiDeck[1]]) }
+  }, [driving, tick])
 
-  if (view === 'data') return <DataCloud onBack={() => setView('live')} />
+  const stats = useMemo(() => ({
+    posts: 128 + (tick % 12) * 4 + effects.shared * 9,
+    images: 18 + (tick % 5) + Math.floor(effects.view / 20),
+    roads: 42 + effects.shared * 2,
+    extract: Math.min(7, 3 + Math.floor(tick / 6) + effects.shared),
+  }), [tick, effects])
 
-  return (
-    <main className="app-shell">
-      <header className="hero">
-        <div>
-          <p className="eyebrow">PRIVATE CAR-TO-CAR SOCIAL GRAPH</p>
-          <h1>CarTweet AI Relay</h1>
-          <p>車同士の非公開SNSを、自車AIが運転者向けに安全翻訳する。</p>
-        </div>
-        <button className={`live-button ${live ? 'is-live' : ''}`} onClick={() => setLive(!live)}>{live ? 'クラウド受信中' : '受信開始'}</button>
-      </header>
+  const beginDrive = () => { setIntro(false); setDriving(true); setStep(2); setTick(1); flash('ドライブを開始しました') }
 
-      <section className="worldview panel">
-        <strong>CarTweetは人間向けSNSではありません。</strong>
-        <span>車が街や道路を大量に観測し、クラウド上で非公開に投稿。</span>
-        <span>人間には生投稿を見せず、自車AIが安全・快適・便利につながる情報だけを要約します。</span>
+  const flash = (message) => {
+    setToast(message)
+    window.setTimeout(() => setToast(''), 2200)
+  }
+
+  const act = (label, id) => {
+    if (label === '立ち寄る') { setRoute('自宅 → 刈谷PA立ち寄り → 名古屋方面'); setEffects((e) => ({ ...e, pa: true })); flash('刈谷PA立ち寄りをルートに追加しました') }
+    else if (label === 'ルート反映') { setEffects((e) => ({ ...e, route: true })); flash('推奨ルートを強調しました') }
+    else if (label === '表示する') { setEffects((e) => ({ ...e, view: e.view + 18 })); flash('景色ハイライトを安全表示しました') }
+    else if (label === '詳しく見る') flash('生データではなく、匿名化された根拠だけ表示します')
+    else flash(`${label}しました`)
+    if (id === 'danger' && label === '了解') setCards((list) => list.filter((card) => card.id !== 'danger'))
+  }
+
+  const share = (kind) => {
+    if (kind === 'voice') {
+      setVoice(true)
+      flash('録音中…')
+      window.setTimeout(() => {
+        setVoice(false)
+        setEffects((e) => ({ ...e, shared: e.shared + 1 }))
+        setCards((list) => [{ id: 'yourVoice', icon: '🎙️', tone: 'alert', title: '自車の音声報告をAI要約', text: '「前方車両が少しふらついています」として周辺へ共有しました。', actions: ['了解'] }, ...list].slice(0, 4))
+        flash('あなたの車が周辺情報を共有しました')
+      }, 1800)
+      return
+    }
+    const label = shareButtons.find(([, value]) => value === kind)?.[0] ?? '情報'
+    setEffects((e) => ({ ...e, shared: e.shared + 1, view: kind === 'view' ? e.view + 24 : e.view }))
+    setCards((list) => [{ id: `shared-${Date.now()}`, icon: '🚗', tone: kind === 'danger' || kind === 'road' ? 'alert' : 'good', title: `${label}を取り込みました`, text: 'あなたの車の匿名データが、周辺AI要約の精度に反映されています。', actions: ['了解'] }, ...list].slice(0, 4))
+    flash('あなたの車が周辺情報を共有しました')
+  }
+
+  return <main className="cockpit">
+    {intro && <section className="intro"><div className="intro-card"><p>STEP 1 / 5</p><h1>CarTweet</h1><h2>車たちが裏側で会話し、<br />あなたには必要な情報だけ届く。</h2><button onClick={beginDrive}>ドライブを開始する</button></div></section>}
+    {toast && <div className="toast">{toast}</div>}
+    <header className="topbar">
+      <div><span>STEP {step} / 5</span><strong>{route}</strong></div>
+      <div><span>現在地</span><strong>東名高速 上り / 岡崎付近</strong></div>
+      <div><span>時刻</span><strong>{new Date(Date.now() + tick * 60000).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}</strong></div>
+      <div className={driving ? 'status live' : 'status'}>{driving ? '走行中・AI受信中' : '出発前'}</div>
+    </header>
+
+    <section className="main-grid">
+      <section className="map panel">
+        <div className="privacy mini"><b>Privacy Guard</b><span>生会話は非表示</span><span>個人情報は自動マスク</span><span>有益情報だけ要約</span><span>位置は必要範囲で利用</span></div>
+        <div className="cloud">CarTweet<br />Cloud</div>
+        <div className="road r1"></div><div className="road r2"></div><div className="route-label">刈谷PA方面</div><div className="loc-label">岡崎付近</div>
+        <div className={`recommended ${effects.route ? 'on' : ''}`}>推奨ルート</div>
+        {['A','B','C','D','E'].map((name, i) => <div key={name} className={`car c${i + 1}`}><span>車両{name}</span><i>signal</i></div>)}
+        <div className="mycar"><b>あなたの車</b><small>AI filtering</small></div>
+        {Array.from({ length: 18 }).map((_, i) => <i key={i} className={`particle p${i % 6}`} style={{ '--n': i }} />)}
+        <div className="raw-note">匿名データのみ流通：data sending / vision data / behavior signal</div>
       </section>
 
-      <section className="workspace">
-        <section className="map-panel panel">
-          <div className="section-title">
-            <h2>車同士の非公開SNSレイヤー</h2>
-            <span>東名高速 上り / 岡崎付近</span>
-          </div>
-          <div className="map-canvas">
-            <span className="label label-a">東名高速 上り</span><span className="label label-b">岡崎付近</span><span className="label label-c">刈谷PA方面</span>
-            <div className="road highway"></div><div className="road city-road one"></div><div className="road city-road two"></div><div className="river"></div>
-            <div className="cloud-node">CarTweet<br />Cloud</div>
-            {vehicleSignals.map((signal, index) => <SignalCar key={signal.car} signal={signal} index={index} />)}
-            <div className="you-pulse">自車AI</div>
-          </div>
-          <div className="private-note">生の投稿本文は人間には表示されません。車専用の非公開会話として暗号化・匿名化されます。</div>
-        </section>
+      <aside className="ai panel">
+        <div className="ai-head"><span>DRIVER AI SUMMARY</span><b>重要度順</b></div>
+        {cards.map((card) => <article className={`ai-card ${card.tone}`} key={card.id}><div className="icon">{card.icon}</div><div className="content"><h3>{card.title}</h3><p>{card.text}</p><div>{card.actions.map((label) => <button key={label} onClick={() => act(label, card.id)}>{label}</button>)}</div></div></article>)}
+      </aside>
+    </section>
 
-        <aside className="driver-panel panel">
-          <div className="section-title stacked">
-            <div><h2>運転者向けAI要約</h2><span>自車に関係ある情報だけを短く表示</span></div>
-          </div>
-          <div className="summary-list">
-            {driverSummaries.map((summary) => <SummaryCard key={summary.text} summary={summary} />)}
-          </div>
-          <PrivacyGuard />
-        </aside>
-      </section>
+    <section className="bottom panel">
+      <div className="stats"><b>周辺車両データ</b><span>投稿処理 {stats.posts}件/分</span><span>画像解析 {stats.images}件</span><span>路面データ {stats.roads}件</span><span>AI抽出 {stats.extract}件</span></div>
+      <div className="actions">{shareButtons.map(([label, kind]) => <button className={kind === 'voice' && voice ? 'recording' : ''} onClick={() => share(kind)} key={kind}>{label}</button>)}</div>
+    </section>
 
-      <section className="metrics panel">
-        {dataCounters.map(([label, value]) => <div className="metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}
-      </section>
-      <button className="data-switch" onClick={() => setView('data')}>データ活用を見る →</button>
-    </main>
-  )
+    {step === 5 && <section className="future panel"><h2>CarTweet Data Cloud</h2>{future.map((item) => <span key={item}>{item}</span>)}<button onClick={() => window.location.reload()}>もう一度体験する</button></section>}
+  </main>
 }
-
-function SignalCar({ signal, index }) {
-  return <div className={`map-car ${signal.tone}`} style={{ left: `${signal.x}%`, top: `${signal.y}%`, '--delay': `${index * .18}s` }}><div className="signal-line" /><div className="packet"><b>{signal.car} → Cloud</b><span>{signal.kind} 送信</span><code>{signal.payload}</code><small>{signal.rate}</small></div><div className="car-icon">▰</div></div>
-}
-
-function SummaryCard({ summary }) {
-  return <article className="summary-card"><div><span className="summary-type">{summary.type}</span><b>{summary.level}</b></div><p>{summary.text}</p><small>{summary.source}</small></article>
-}
-
-function PrivacyGuard() {
-  return <section className="privacy-card"><h3>Privacy Guard</h3>{privacyItems.map((item) => <div key={item}>✓ {item}</div>)}</section>
-}
-
-function DataCloud({ onBack }) {
-  const data = ['匿名化された車両投稿', 'AIマスク済み写真傾向', '丸めた位置情報', '道路状態/混雑/危険兆候', '地域ごとの移動傾向']
-  const services = ['リアルタイム安全支援', '道路管理/自治体向けレポート', '観光スポット発見', '店舗/SA/PA混雑予測', '災害時の現地情報収集']
-  return <main className="app-shell data-view"><header className="hero"><div><p className="eyebrow">REAL WORLD DATA PLATFORM</p><h1>CarTweet Data Cloud</h1><p>車同士の非公開SNSが、プライバシー保護されたリアルワールドデータ基盤になる。</p></div><button className="live-button" onClick={onBack}>Liveへ戻る</button></header><section className="cloud-grid"><ListPanel title="蓄積されるデータ" items={data} /><div className="cloud-core panel"><div className="mini-cards"><span>全国の車</span><b>→</b><span>非公開投稿</span></div><div className="ai-orb">AI解析<br /><small>Privacy by Design</small></div><div className="service-rays"><span>安全</span><span>観光</span><span>店舗</span><span>自治体</span><span>防災</span></div></div><ListPanel title="将来広がるサービス" items={services} /></section></main>
-}
-
-function ListPanel({ title, items }) { return <section className="panel list-panel"><h2>{title}</h2>{items.map((item) => <div className="list-item" key={item}>{item}</div>)}</section> }
 
 export default App
