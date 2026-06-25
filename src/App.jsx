@@ -17,7 +17,7 @@ function SceneHeader({ scene, current, setScene }) {
 function SceneImageViewer({ scene }) {
   return <div className="image-viewer" key={scene.id}>
     <img src={scene.image} alt={`${scene.situation} シーン${scene.sceneNo} の状況画像`} onLoad={(e) => e.currentTarget.parentElement?.classList.remove('missing')} onError={(e) => e.currentTarget.parentElement?.classList.add('missing')} />
-    <div className="missing-note"><b>{scene.id}.jpg</b><span>public/assets/scenes/ に用意画像を配置すると、ここに大きく表示されます。</span></div>
+    <div className="missing-note"><b>{scene.id}.png</b><span>public/assets/scenes/ に画像を配置すると、ここに大きく表示されます。</span></div>
     <div className="scene-badge">{scene.situation}・Scene {scene.sceneNo}</div>
   </div>;
 }
