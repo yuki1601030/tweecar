@@ -1,26 +1,49 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { scenarioTabs, scenes } from './data/scenes';
 
 function ScenePanel({ scene, current, setScene }) {
+  const [imageFailed, setImageFailed] = useState(false);
   const go = (index) => setScene(Math.max(0, Math.min(scenes.length - 1, index)));
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [scene.id, scene.image]);
+
   return <section className="scene-panel">
     <div className="scene-panel__head">
       <div className="brand"><span>🚙</span><b>TweeCar</b></div>
       <div>
         <p className="eyebrow">シーン説明エリア</p>
-        <h1>{scene.situation} シーン{scene.sceneNo}</h1>
+        <h1>{scene.group || scene.situation} {scene.label || `シーン${scene.sceneNo}`}</h1>
       </div>
     </div>
-    <div className="scene-photo" key={scene.id}>
-      <img src={scene.image} alt={`${scene.situation} シーン${scene.sceneNo} の状況写真`} />
+    <div className="scene-title-card">
+      <p>{scene.title}</p>
+      <span>{scene.id}</span>
+    </div>
+    <div className="scene-photo-wrap" key={scene.id}>
+      {!imageFailed && <img
+        src={scene.image}
+        alt={scene.title}
+        className="scene-photo"
+        onError={() => {
+          console.error('画像読み込み失敗:', scene.image);
+          setImageFailed(true);
+        }}
+      />}
+      {imageFailed && <div className="scene-image-debug" role="alert">
+        <strong>画像を読み込めません</strong>
+        <span>参照パス：{scene.assetPath}</span>
+        <small>GitHub上の public/assets/scenes/ のファイル名を確認してください</small>
+      </div>}
       <div className="scene-chip">{scene.title}</div>
     </div>
     <div className="scene-controls">
-      <button onClick={() => go(current - 1)}>← 前へ</button>
-      <button className="primary" onClick={() => go(current + 1)}>次へ →</button>
+      <button onClick={() => go(current - 1)} disabled={current === 0}>← 前へ</button>
+      <button className="primary" onClick={() => go(current + 1)} disabled={current === scenes.length - 1}>次へ →</button>
     </div>
-    <div className="scenario-tabs">{scenarioTabs.map(tab => <button key={tab.id} className={scene.situation.endsWith(tab.id) ? 'active' : ''} onClick={() => setScene(tab.startIndex)}><b>{tab.label}</b><span>{tab.copy}</span></button>)}</div>
-    <div className="thumb-strip">{scenes.map((item, index) => <button key={item.id} className={`thumb ${index === current ? 'selected' : ''}`} onClick={() => setScene(index)}><img src={item.image} alt={`${item.situation} シーン${item.sceneNo}`} /><span>{item.situation.replace('状況', '')}-{item.sceneNo}</span></button>)}</div>
+    <div className="scenario-tabs" aria-label="シーン一覧">{scenarioTabs.map(tab => <button key={tab.id} className={(scene.group || scene.situation).endsWith(tab.id) ? 'active' : ''} onClick={() => setScene(tab.startIndex)}><b>{tab.label}</b><span>{tab.copy}</span></button>)}</div>
+    <div className="thumb-strip">{scenes.map((item, index) => <button key={item.id} className={`thumb ${index === current ? 'selected' : ''}`} onClick={() => setScene(index)}><img src={item.image} alt={item.title} onError={(event) => { event.currentTarget.style.display = 'none'; }} /><span>{(item.group || item.situation).replace('状況', '')}-{item.sceneNo}</span></button>)}</div>
   </section>;
 }
 

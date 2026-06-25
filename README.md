@@ -80,3 +80,27 @@ https://<username>.github.io/tweecar/
 - React 側の画像パスが `import.meta.env.BASE_URL` を使っていること。
 
 GitHub Pages はリポジトリ名付きの URL 配下で配信されるため、`base` や画像パスが `/assets/...` のようなルート基準になっていると、JavaScript や画像を読み込めず白画面になることがあります。
+
+## 写真が表示されないときの確認ポイント
+
+写真ファイルは必ず `public/assets/scenes/` に入れてください。現在の画面は、`src/data/scenes.js` で次のファイル名を参照します。
+
+- `sceneA1.png`
+- `sceneA2.png`
+- `sceneA3.png`
+- `sceneA4.png`
+- `sceneB5.png`
+- `sceneB6.png`
+- `sceneB7.png`
+- `sceneB8.png`
+
+GitHub Pages ではサイトが `/tweecar/` のようなリポジトリ名つきの場所で公開されるため、画像パスは `/assets/...` のように書かず、必ず `import.meta.env.BASE_URL` を使って組み立てます。
+
+写真が出ない場合は、以下を確認してください。
+
+- ファイル名が `sceneA1.png` 〜 `sceneB8.png` と完全に一致しているか。
+- 拡張子が `.png` になっているか。`.jpg` / `.jpeg` / `.webp` のままだと、現在の参照パスとは一致しません。
+- 大文字小文字が一致しているか。`sceneA1.png` と `SceneA1.png` は GitHub Pages 上では別ファイルとして扱われます。
+- ファイル名にスペースや日本語が入っていないか。
+- `public/assets/scenes/` ではなく別フォルダに入っていないか。
+- 画面に「画像を読み込めません」と出た場合は、表示された「参照パス」と GitHub 上の実際のファイル名を見比べてください。
