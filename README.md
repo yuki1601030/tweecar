@@ -57,3 +57,26 @@ PNG など別拡張子で使いたい場合は、`src/data/scenes.js` の `image
 - 「注意を聞く」ボタンで PC 音声が流れることが、体験理解に効くか
 - 生ツイートを隠し、必要情報だけ要約する設計に安心感があるか
 - Privacy Guard の小カードで、個人情報や位置情報の扱いに不安が減るか
+
+## GitHub Pages で公開する方法（初心者向け）
+
+このプロジェクトは GitHub Pages で公開すると、URL は次の形式になります。
+
+```text
+https://<username>.github.io/tweecar/
+```
+
+公開するには、GitHub のリポジトリ画面で以下を設定してください。
+
+1. GitHub のリポジトリを開きます。
+2. 上部メニューの **Settings** を押します。
+3. 左側メニューの **Pages** を押します。
+4. **Build and deployment** の **Source** を **GitHub Actions** に変更します。
+5. `main` ブランチに変更が push されると、自動でビルドと公開が実行されます。
+
+白画面になった場合は、次の2点を確認してください。
+
+- `vite.config.js` の `base` が `/tweecar/` になっていること。
+- React 側の画像パスが `import.meta.env.BASE_URL` を使っていること。
+
+GitHub Pages はリポジトリ名付きの URL 配下で配信されるため、`base` や画像パスが `/assets/...` のようなルート基準になっていると、JavaScript や画像を読み込めず白画面になることがあります。
