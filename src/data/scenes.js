@@ -1,4 +1,6 @@
 const base = import.meta.env.BASE_URL;
+const sceneImage = (fileName) => `${base}assets/scenes/${fileName}`;
+const sceneAssetPath = (fileName) => `assets/scenes/${fileName}`;
 
 export const scenarioTabs = [
   { id: 'A', label: '状況A', startIndex: 0, copy: '高速接近車両を事前回避' },
@@ -7,51 +9,51 @@ export const scenarioTabs = [
 
 export const scenes = [
   {
-    id: 'sceneA1', situation: '状況A', sceneNo: 1, image: `${base}assets/scenes/sceneA1.png`, title: '通常走行 / 背後で危険の兆候',
+    id: 'sceneA1', group: '状況A', situation: '状況A', label: 'シーン1', sceneNo: 1, image: sceneImage('sceneA1.png'), assetPath: sceneAssetPath('sceneA1.png'), title: '通常走行 / 背後で危険の兆候',
     nav: { aLane: 'fast', a: 45, b: 8, bLane: 'fast', zigzag: true, risk: 'LOW', speed: 'A車 92km/h / B車 遠方', distanceLabel: 'B車は後方数km', distance: 22 },
     ai: ['後方から速度差の大きい車両を検知中'], voice: '後方から速度差の大きい車両を検知しています。', driver: '後ろの状況はあまり気にしていないな…',
     packets: ['B車 → Cloud：高速走行の兆候 / 車線ふらつき', 'A車AI：後方リスクを低優先で監視中'], internal: ['B車：「かなり速めに走行中」'], actions: ['next'], result: ''
   },
   {
-    id: 'sceneA2', situation: '状況A', sceneNo: 2, image: `${base}assets/scenes/sceneA2.png`, title: '高速接近 / A車の近くにアラート',
+    id: 'sceneA2', group: '状況A', situation: '状況A', label: 'シーン2', sceneNo: 2, image: sceneImage('sceneA2.png'), assetPath: sceneAssetPath('sceneA2.png'), title: '高速接近 / A車の近くにアラート',
     nav: { aLane: 'fast', a: 48, b: 26, bLane: 'fast', c: 10, zigzag: true, alert: true, risk: 'HIGH', speed: '速度差 大 / 接近中', distanceLabel: 'B車が急接近', distance: 38 },
     ai: ['後方から高速接近する車両があります', '車線変更の可能性が高く、接近速度が大きいです'], voice: '後方から高速接近する車両があります。注意してください。', driver: 'けっこう速い車が来てるんだな…',
     packets: ['B車 → Cloud：speed=high / zigzag-lane-change', 'C車 → Cloud：急な追い抜きを検知', 'A車AI：通知準備'], internal: ['B車：「うちの運転手は140km/h出してる」', 'C車：「B車、めっちゃ速かった」'], actions: ['prev', 'listen', 'avoid', 'next'], result: ''
   },
   {
-    id: 'sceneA3', situation: '状況A', sceneNo: 3, image: `${base}assets/scenes/sceneA3.png`, title: 'AI音声で退避を促す', voiceRequired: true,
+    id: 'sceneA3', group: '状況A', situation: '状況A', label: 'シーン3', sceneNo: 3, image: sceneImage('sceneA3.png'), assetPath: sceneAssetPath('sceneA3.png'), title: 'AI音声で退避を促す', voiceRequired: true,
     voice: '後ろからすっごい速い車が来ますよ。走行車線に避けるといいよ。',
     nav: { aLane: 'fast', a: 50, b: 34, bLane: 'fast', c: 12, zigzag: true, alert: true, arrow: 'left', risk: 'DANGER', speed: '高速接近 / 退避推奨', distanceLabel: 'B車が接近中', distance: 44 },
     ai: ['後ろからすっごい速い車が来ますよ。走行車線に避けるといいよ。'], driver: 'そうなの？危ないから走行車線に避けておくね',
     packets: ['A車AI：voice-alert / safe-lane-recommendation', 'B車 → Cloud：rapid-approach'], internal: ['A車：「B車が近い。安全側に避けたい」'], actions: ['prev', 'listen', 'avoid', 'next'], result: '走行車線に避けると、A車が左車線へ移動します。'
   },
   {
-    id: 'sceneA4', situation: '状況A', sceneNo: 4, image: `${base}assets/scenes/sceneA4.png`, title: 'B車が通過 / 事前回避で安全確保',
+    id: 'sceneA4', group: '状況A', situation: '状況A', label: 'シーン4', sceneNo: 4, image: sceneImage('sceneA4.png'), assetPath: sceneAssetPath('sceneA4.png'), title: 'B車が通過 / 事前回避で安全確保',
     nav: { aLane: 'cruise', a: 54, b: 76, bLane: 'fast', safe: true, risk: 'SAFE', speed: '安全巡航中', distanceLabel: '高速接近車両は通過', distance: 82 },
     ai: ['高速接近車両は通過しました'], driver: '避けておいてよかった…', resultCards: ['事前回避で安全確保'],
     packets: ['B車 → Cloud：passed / risk-cleared', 'A車AI：avoidance-complete'], internal: ['A車：「事前に避けられてよかった」'], actions: ['prev', 'toB', 'restart'], result: ''
   },
   {
-    id: 'sceneB5', situation: '状況B', sceneNo: 5, image: `${base}assets/scenes/sceneB5.png`, title: 'F車のながら運転リスクを裏側で検知',
+    id: 'sceneB5', group: '状況B', situation: '状況B', label: 'シーン5', sceneNo: 5, image: sceneImage('sceneB5.png'), assetPath: sceneAssetPath('sceneB5.png'), title: 'F車のながら運転リスクを裏側で検知',
     nav: { aLane: 'cruise', a: 68, e: 40, f: 24, phone: true, risk: 'LOW', speed: 'A車 88km/h / 後方監視', distanceLabel: 'F車は後方', distance: 34 },
     ai: ['後方車両の挙動データを確認中'], driver: '後ろの状況までは見切れていないな…',
     packets: ['F車 → Cloud：driver-distraction signal', 'E車 → Cloud：車間距離が不安定'], internal: ['F車：「ドライバーがスマホを見ている可能性」'], actions: ['prev', 'next'], result: ''
   },
   {
-    id: 'sceneB6', situation: '状況B', sceneNo: 6, image: `${base}assets/scenes/sceneB6.png`, title: 'F車の危険度が上昇',
+    id: 'sceneB6', group: '状況B', situation: '状況B', label: 'シーン6', sceneNo: 6, image: sceneImage('sceneB6.png'), assetPath: sceneAssetPath('sceneB6.png'), title: 'F車の危険度が上昇',
     nav: { aLane: 'cruise', a: 66, e: 38, f: 26, phone: true, alert: true, risk: 'HIGH', speed: '注意低下の可能性', distanceLabel: 'F車との距離が近い', distance: 30 },
     ai: ['後方車両に注意が必要です', '運転者の注意低下が検知されている可能性があります'], driver: '追突されるリスクあるやん…',
     packets: ['F車 → Cloud：distraction probability up', 'A車AI：summary-ready / raw-post-hidden'], internal: ['A車：「F車うちの後ろじゃん、追突されるリスクあるやん！」'], actions: ['prev', 'listen', 'distance', 'next'], result: ''
   },
   {
-    id: 'sceneB7', situation: '状況B', sceneNo: 7, image: `${base}assets/scenes/sceneB7.png`, title: 'AI音声で安全距離を促す', voiceRequired: true,
+    id: 'sceneB7', group: '状況B', situation: '状況B', label: 'シーン7', sceneNo: 7, image: sceneImage('sceneB7.png'), assetPath: sceneAssetPath('sceneB7.png'), title: 'AI音声で安全距離を促す', voiceRequired: true,
     voice: '後ろの車の運転手が、スマホを見ながら運転している可能性があります。安全のため、距離を取ってください。',
     nav: { aLane: 'cruise', a: 66, e: 36, f: 27, phone: true, alert: true, arrow: 'right', risk: 'DANGER', speed: 'F車注意 / 距離確保推奨', distanceLabel: 'F車との距離', distance: 36 },
     ai: ['後ろの車の運転手が、スマホを見ながら運転している可能性があります。安全のため、距離を取ってください。'], driver: '危な！一旦距離取っておこうかな',
     packets: ['A車AI：voice-alert / distance-recommendation', 'Cloud → A車AI：masked-risk-summary'], internal: ['A車：「F車と距離を取りたい」'], actions: ['prev', 'listen', 'distance', 'next'], result: '距離を取ると、A車が移動し車間距離メーターが広がります。'
   },
   {
-    id: 'sceneB8', situation: '状況B', sceneNo: 8, image: `${base}assets/scenes/sceneB8.png`, title: '危険回避完了 / 快適に走行継続',
+    id: 'sceneB8', group: '状況B', situation: '状況B', label: 'シーン8', sceneNo: 8, image: sceneImage('sceneB8.png'), assetPath: sceneAssetPath('sceneB8.png'), title: '危険回避完了 / 快適に走行継続',
     nav: { aLane: 'fast', a: 78, e: 36, f: 12, phone: true, safe: true, risk: 'SAFE', speed: '安全な間隔を確保', distanceLabel: 'F車は後方へ離脱', distance: 88 },
     ai: ['必要な情報だけを事前に通知しました'], driver: '注意してくれて助かったよ', resultCards: ['危険回避完了', '安全な間隔を確保', '快適に走行継続'],
     packets: ['A車AI：avoidance-complete / safe-distance-expanded', 'Privacy Guard：personal-data-masked / raw-post-hidden'], internal: ['F車：「ドライバー状態はマスクして共有」'], actions: ['prev', 'toA', 'restart'], result: ''
